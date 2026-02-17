@@ -13,7 +13,7 @@ QStringList RecursiveProcessor::collectFilePaths(
     return files;
   }
 
-  QDirIterator iterator(root.absolutePath(), QDir::Files | QDir::NoDotAndDotDot);
+  QDirIterator iterator(root.absolutePath(), QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
   while (iterator.hasNext()) {
     const QString path = iterator.next();
     const QFileInfo info(path);
