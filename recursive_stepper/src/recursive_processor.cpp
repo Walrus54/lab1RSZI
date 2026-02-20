@@ -17,6 +17,11 @@ QStringList RecursiveProcessor::collectFilePaths(
   while (iterator.hasNext()) {
     const QString path = iterator.next();
     const QFileInfo info(path);
+
+    if (info.isSymLink()) {
+      continue;
+    }
+
     files.append(info.absoluteFilePath());
   }
 
