@@ -22,8 +22,18 @@ QStringList RecursiveProcessor::collectFilePaths(
       continue;
     }
 
+    if (isShortcutFile(path)) {
+      continue;
+    }
+
     files.append(info.absoluteFilePath());
   }
 
   return files;
+}
+
+bool RecursiveProcessor::isShortcutFile(const QString& filePath) const {
+  const QFileInfo info(filePath);
+  const QString suffix = info.suffix().toLower();
+  return suffix == QStringLiteral("lnk") || suffix == QStringLiteral("url");
 }
