@@ -45,8 +45,8 @@ int main(int argc, char* argv[]) {
     return parseResult;
   }
 
-  RecursiveProcessor processor;
-  const QStringList files = processor.collectFilePaths(directoryPath);
-  QTextStream(stdout) << "Collected files: " << files.size() << Qt::endl;
+  RecursiveProcessor processor(true);
+  const QStringList files = processor.collectValidFilePaths(directoryPath);
+  QTextStream(stdout) << "Collected valid files: " << files.size() << Qt::endl;
   return 0;
 }
