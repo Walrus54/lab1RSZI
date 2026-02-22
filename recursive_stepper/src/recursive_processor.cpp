@@ -26,6 +26,10 @@ QStringList RecursiveProcessor::collectFilePaths(
       continue;
     }
 
+    if (info.size() == 0) {
+      continue;
+    }
+
     files.append(info.absoluteFilePath());
   }
 
