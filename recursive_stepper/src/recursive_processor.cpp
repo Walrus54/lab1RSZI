@@ -4,6 +4,12 @@
 #include <QDirIterator>
 #include <QFileInfo>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+
+#include <string>
+#endif
+
 RecursiveProcessor::RecursiveProcessor(bool skipSystemFiles)
     : skipSystemFiles_(skipSystemFiles) {}
 
@@ -55,8 +61,13 @@ bool RecursiveProcessor::isShortcutFile(const QString& filePath) const {
 
 bool RecursiveProcessor::isSystemFile(const QString& filePath) const {
 #ifdef Q_OS_WIN
-  Q_UNUSED(filePath);
-  return false;
+  const std::wstring nativePath =
+      QDir::toNativeSeparators(filePath).toStdWString();
+  const DWORD attributes = GetFileAttributesW(nativePath.c_str());
+  if (attributes == INVALID_FILE_ATTRIBUTES) {
+    return false;
+  }
+  return (attributes & FILE_ATTRIBUTE_SYSTEM) != 0;
 #else
   const QString normalizedPath = QDir::cleanPath(filePath);
   return normalizedPath.startsWith(QStringLiteral("/proc/")) ||
