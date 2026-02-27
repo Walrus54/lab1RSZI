@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(RecursiveFileFolderEncryptor
         VERSION 0.1.0
-        DESCRIPTION "Recursive file/folder processor"
+        DESCRIPTION "Recursive file/folder encryptor prototype"
         LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
