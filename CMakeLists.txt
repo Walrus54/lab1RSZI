@@ -20,12 +20,14 @@ function(set_default_warnings target_name)
 endfunction()
 
 add_subdirectory(recursive_stepper)
+add_subdirectory(logger)
 
 add_executable(recursive_encryptor
                main.cpp)
 
 target_link_libraries(recursive_encryptor
                       PRIVATE recursive_stepper
+                              logger
                               Qt5::Core)
 
 set_default_warnings(recursive_encryptor)
