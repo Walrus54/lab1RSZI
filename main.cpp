@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QTextStream>
 
+#include "logger.h"
 #include "recursive_processor.h"
 
 namespace {
@@ -38,6 +39,8 @@ int parseArguments(const QCoreApplication& app, QString& directoryPath) {
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
+
+  Logger::instance().init(QDir::current().filePath(QStringLiteral("encryptor.log")));
 
   QString directoryPath;
   const int parseResult = parseArguments(app, directoryPath);
