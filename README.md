@@ -1,5 +1,121 @@
 # Recursive File/Folder Encryptor
 
-Starter project for a lab assignment.
+Консольное приложение для лабораторной работы №1 ("Разработка средств защиты информации").
 
-Current stage: recursive file scan with basic filters.
+## Технологии
+
+- C++17
+- CMake >= 3.12
+- Qt 5.12 (`Qt5::Core`)
+- OpenSSL (по умолчанию требуется 3.3.6)
+
+## Структура проекта
+
+- `main.cpp` — CLI, запуск обработки, вывод статистики
+- `logger/` — модуль логирования (`Logger`, singleton)
+- `logger/src/` — реализация модуля логирования
+- `crypto_manager/` — модуль шифрования/дешифрования (`Encoder`, singleton)
+- `crypto_manager/src/` — реализация криптомодуля (AES-256-GCM)
+- `recursive_stepper/` — модуль рекурсивного обхода (`QDirIterator`)
+- `recursive_stepper/src/` — реализация рекурсивного обходчика
+- `cmake/` — служебные CMake-скрипты
+- `*/test/` — каталоги под unit-тесты (структурно совместимы с референсом)
+- `testing/` — тестовая директория с вложенными файлами для ручной проверки работы программы
+- `.clang-format` — стиль Google
+
+## UML Архитектура (Mermaid)
+
+```mermaid
+classDiagram
+    class MainApp {
+      +main(argc, argv) int
+    }
+
+    class RecursiveProcessor {
+      -skip_system_files_ bool
+      -excluded_file_path_ QString
+      +collectValidFilePaths(root_directory) QStringList
+      -isShortcutFile(file_path) bool
+      -isSystemFile(file_path) bool
+    }
+
+    class Encoder {
+      +instance() Encoder&
+      +encryptFile(file_path, password) Result
+      +decryptFile(file_path, password) Result
+      +isEncryptedFile(file_path) bool
+    }
+
+    class Logger {
+      +instance() Logger&
+      +initialize(log_file_path) void
+      +info(message) void
+      +warning(message) void
+      +error(message) void
+    }
+
+    class OpenSSL {
+      <<library>>
+      EVP
+      PBKDF2
+      RAND
+    }
+
+    class QtCore {
+      <<library>>
+      QCommandLineParser
+      QDirIterator
+      QFile/QSaveFile
+    }
+
+    MainApp --> RecursiveProcessor : собирает валидные пути
+    MainApp --> Encoder : шифрует/дешифрует файлы
+    MainApp --> Logger : инициализация и итоговый вывод
+    RecursiveProcessor --> Logger : лог событий обхода
+    Encoder --> Logger : лог crypto/file ошибок
+    Encoder --> OpenSSL : AES-256-GCM, PBKDF2
+    MainApp --> QtCore : CLI и утилиты Qt
+    RecursiveProcessor --> QtCore : обход директорий
+    Encoder --> QtCore : файловый ввод/вывод
+```
+
+## Сборка
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+```
+
+Если в окружении нет OpenSSL 3.3.6, но нужна локальная проверка:
+
+```bash
+cmake -S . -B build -DOPENSSL_REQUIRED_VERSION=3.0.0
+cmake --build build -j
+```
+
+## Запуск
+
+```bash
+./build/recursive_encryptor --mode encrypt --directory /path/to/dir --password secret
+./build/recursive_encryptor --mode decrypt --directory /path/to/dir --password secret
+```
+
+Дополнительно можно указать путь к лог-файлу:
+
+```bash
+./build/recursive_encryptor --mode encrypt --directory /path/to/dir --password secret --log /path/to/encryptor.log
+```
+
+## Особенности реализации
+
+- Алгоритм: AES-256-GCM (OpenSSL EVP API)
+- Ключ: PBKDF2-HMAC-SHA256
+- Рекурсивный обход: `QDirIterator` с поддержкой подпапок любой вложенности
+- Пропуск и логирование событий:
+  - пустые файлы
+  - ярлыки (`*.lnk`, `*.url`)
+  - символьные ссылки
+  - системные файлы (Windows: `FILE_ATTRIBUTE_SYSTEM`, Unix: спец-пути `/proc`, `/sys`, `/dev`)
+  - служебный лог-файл приложения
+- Безопасная запись: `QSaveFile` (атомарная замена файлов)
+- Подробные Doxygen-комментарии в заголовочных файлах
