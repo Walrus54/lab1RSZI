@@ -3,4 +3,3 @@ cmake-build-*/
 *.log
 *.swp
 *.swo
-*.log

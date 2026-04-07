@@ -9,7 +9,8 @@ target_include_directories(${PROJECT_NAME}
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME}
-                      PUBLIC Qt5::Core)
+                      PUBLIC logger
+                             Qt5::Core)
 
 if(COMMAND set_default_warnings)
   set_default_warnings(${PROJECT_NAME})
