@@ -27,10 +27,6 @@
 
 ```mermaid
 classDiagram
-    class MainApp {
-      +main(argc, argv) int
-    }
-
     class RecursiveProcessor {
       -skipSystemFiles_ bool
       -excludedFilePath_ QString
@@ -68,16 +64,12 @@ classDiagram
       QFile/QSaveFile
     }
 
-    MainApp --> RecursiveProcessor : собирает валидные пути
-    MainApp --> Encoder : шифрует/дешифрует файлы
-    MainApp --> Logger : инициализация и итоговый вывод
-    RecursiveProcessor --> Logger : лог событий обхода
-    Encoder --> Logger : лог crypto/file ошибок
-    Encoder --> OpenSSL : AES-256-GCM, PBKDF2
-    MainApp --> QtCore : CLI и утилиты Qt
-    RecursiveProcessor --> QtCore : обход директорий
-    Encoder --> QtCore : файловый ввод/вывод
-    Logger --> QtCore : файл журнала и поток вывода
+    RecursiveProcessor --> Logger
+    Encoder --> Logger
+    Encoder --> OpenSSL
+    RecursiveProcessor --> QtCore
+    Encoder --> QtCore
+    Logger --> QtCore
 ```
 
 ## Сборка
