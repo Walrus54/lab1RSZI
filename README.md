@@ -51,25 +51,8 @@ classDiagram
       +error(message) void
     }
 
-    class OpenSSL {
-      <<library>>
-      EVP
-      PBKDF2
-      RAND
-    }
-
-    class QtCore {
-      <<library>>
-      QDirIterator
-      QFile/QSaveFile
-    }
-
     RecursiveProcessor ..> Logger
     Encoder ..> Logger
-    Encoder ..> OpenSSL
-    RecursiveProcessor ..> QtCore
-    Encoder ..> QtCore
-    Logger *-- QtCore
 ```
 
 ## Сборка
