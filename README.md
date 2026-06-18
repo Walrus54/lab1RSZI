@@ -32,23 +32,24 @@ classDiagram
     }
 
     class RecursiveProcessor {
-      -skip_system_files_ bool
-      -excluded_file_path_ QString
-      +collectValidFilePaths(root_directory) QStringList
-      -isShortcutFile(file_path) bool
-      -isSystemFile(file_path) bool
+      -skipSystemFiles_ bool
+      -excludedFilePath_ QString
+      +RecursiveProcessor(excludedFilePath, skipSystemFiles)
+      +collectValidFilePaths(rootDirectory) QStringList
+      -isShortcutFile(filePath) bool
+      -isSystemFile(filePath) bool
     }
 
     class Encoder {
       +instance() Encoder&
-      +encryptFile(file_path, password) Result
-      +decryptFile(file_path, password) Result
-      +isEncryptedFile(file_path) bool
+      +encryptFile(filePath, password) Result
+      +decryptFile(filePath, password) Result
+      +isEncryptedFile(filePath) bool
     }
 
     class Logger {
       +instance() Logger&
-      +initialize(log_file_path) void
+      +initialize(logFilePath) void
       +info(message) void
       +warning(message) void
       +error(message) void
@@ -63,7 +64,6 @@ classDiagram
 
     class QtCore {
       <<library>>
-      QCommandLineParser
       QDirIterator
       QFile/QSaveFile
     }
@@ -77,6 +77,7 @@ classDiagram
     MainApp --> QtCore : CLI и утилиты Qt
     RecursiveProcessor --> QtCore : обход директорий
     Encoder --> QtCore : файловый ввод/вывод
+    Logger --> QtCore : файл журнала и поток вывода
 ```
 
 ## Сборка

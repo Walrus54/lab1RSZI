@@ -1,10 +1,6 @@
-#include <QCommandLineOption>
-#include <QCommandLineParser>
 #include <QDir>
 #include <QStringList>
 #include <QTextStream>
-
-#include <string_view>
 
 #include "encoder.h"
 #include "logger.h"
@@ -13,7 +9,6 @@
 namespace {
 
 constexpr int kContinueExecution = -1;
-constexpr std::string_view kApplicationVersion = "1.0.0";
 
 /**
  * @brief Параметры, полученные из командной строки.
@@ -38,99 +33,86 @@ struct ProcessingSummary {
 };
 
 /**
- * @brief Преобразовать argc/argv в QStringList для QCommandLineParser.
+ * @brief Преобразовать argc/argv в QStringList аргументов запуска.
  * @param[in] argc Количество аргументов.
  * @param[in] argv Массив аргументов.
- * @return Список аргументов Qt-формата.
+ * @return Список аргументов без имени исполняемого файла (argv[0]).
  */
 QStringList buildArgumentList(int argc, char* argv[]) {
   QStringList argumentList;
-  argumentList.reserve(argc);
-  for (int index = 0; index < argc; ++index) {
+  argumentList.reserve(argc > 1 ? argc - 1 : 0);
+  for (int index = 1; index < argc; ++index) {
     argumentList.append(QString::fromLocal8Bit(argv[index]));
   }
   return argumentList;
 }
 
 /**
- * @brief Вывести текст справки в stdout.
- * @param[in] parser Настроенный парсер командной строки.
+ * @brief Проверить, соответствует ли аргумент короткому или длинному имени.
+ * @param[in] argument Разбираемый аргумент.
+ * @param[in] shortName Короткое имя опции (например, "-m").
+ * @param[in] longName Длинное имя опции (например, "--mode").
+ * @return `true`, если аргумент совпадает с одним из имён.
  */
-void printHelp(const QCommandLineParser& parser) {
-  QTextStream(stdout)
-      << "Usage: recursive_encryptor [options]\n"
-      << parser.applicationDescription() << "\n\n"
-      << "Options:\n"
-      << "  -h, --help                   Показать справку.\n"
-      << "  -v, --version                Показать версию приложения.\n"
-      << "  -m, --mode <mode>            Режим: encrypt или decrypt\n"
-      << "  -d, --directory <directory>  Путь к корневой директории\n"
-      << "  -p, --password <password>    Пароль шифрования/дешифрования\n"
-      << "  -l, --log <log>              Путь к файлу журнала (опционально)\n"
-      << Qt::endl;
+bool matchesOption(const QString& argument, const QString& shortName,
+                   const QString& longName) {
+  return argument == shortName || argument == longName;
 }
 
 /**
- * @brief Разобрать параметры командной строки.
+ * @brief Разобрать параметры командной строки вручную.
  * @param[in] arguments Список аргументов командной строки.
  * @param[out] commandLineOptions Выходные параметры запуска.
  * @return Код завершения, либо kContinueExecution для продолжения работы.
  */
 int parseCommandLine(const QStringList& arguments,
                      CommandLineOptions& commandLineOptions) {
-  QCommandLineParser parser;
-  parser.setApplicationDescription(
-      "Recursive File/Folder Encryptor (AES-256-GCM)");
+  bool modeSet = false;
+  bool directorySet = false;
+  bool passwordSet = false;
 
-  const QCommandLineOption helpOption({"h", "help"}, "Показать справку.");
-  const QCommandLineOption versionOption({"v", "version"},
-                                         "Показать версию приложения.");
-  const QCommandLineOption modeOption({"m", "mode"},
-                                      "Режим: encrypt или decrypt", "mode");
-  const QCommandLineOption directoryOption({"d", "directory"},
-                                           "Путь к корневой директории",
-                                           "directory");
-  const QCommandLineOption passwordOption(
-      {"p", "password"}, "Пароль шифрования/дешифрования", "password");
-  const QCommandLineOption logOption({"l", "log"},
-                                     "Путь к файлу журнала (опционально)",
-                                     "log");
+  for (qsizetype index = 0; index < arguments.size(); ++index) {
+    const QString& argument = arguments.at(index);
 
-  parser.addOption(helpOption);
-  parser.addOption(versionOption);
-  parser.addOption(modeOption);
-  parser.addOption(directoryOption);
-  parser.addOption(passwordOption);
-  parser.addOption(logOption);
-  parser.process(arguments);
+    const bool isMode = matchesOption(argument, "-m", "--mode");
+    const bool isDirectory = matchesOption(argument, "-d", "--directory");
+    const bool isPassword = matchesOption(argument, "-p", "--password");
+    const bool isLog = matchesOption(argument, "-l", "--log");
 
-  if (parser.isSet(helpOption)) {
-    printHelp(parser);
-    return 0;
+    if (!isMode && !isDirectory && !isPassword && !isLog) {
+      QTextStream(stderr)
+          << "Неизвестный аргумент: " << argument << Qt::endl;
+      return 1;
+    }
+
+    if (index + 1 >= arguments.size()) {
+      QTextStream(stderr)
+          << "Для аргумента " << argument << " не указано значение." << Qt::endl;
+      return 1;
+    }
+
+    const QString& value = arguments.at(++index);
+    if (isMode) {
+      commandLineOptions.mode = value.trimmed().toLower();
+      modeSet = true;
+    } else if (isDirectory) {
+      commandLineOptions.directoryPath = value.trimmed();
+      directorySet = true;
+    } else if (isPassword) {
+      commandLineOptions.password = value;
+      passwordSet = true;
+    } else {
+      commandLineOptions.logPath = value.trimmed();
+    }
   }
 
-  if (parser.isSet(versionOption)) {
-    QTextStream(stdout)
-        << "recursive_encryptor "
-        << QString::fromLatin1(kApplicationVersion.data(),
-                               static_cast<int>(kApplicationVersion.size()))
-        << Qt::endl;
-    return 0;
-  }
-
-  if (!parser.isSet(modeOption) || !parser.isSet(directoryOption) ||
-      !parser.isSet(passwordOption)) {
+  if (!modeSet || !directorySet || !passwordSet) {
     QTextStream(stderr)
         << "Требуются параметры: --mode <encrypt|decrypt> --directory <path> "
            "--password <value>"
         << Qt::endl;
     return 1;
   }
-
-  commandLineOptions.mode = parser.value(modeOption).trimmed().toLower();
-  commandLineOptions.directoryPath = parser.value(directoryOption).trimmed();
-  commandLineOptions.password = parser.value(passwordOption);
-  commandLineOptions.logPath = parser.value(logOption).trimmed();
 
   return kContinueExecution;
 }
