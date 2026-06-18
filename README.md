@@ -64,12 +64,12 @@ classDiagram
       QFile/QSaveFile
     }
 
-    RecursiveProcessor --> Logger
-    Encoder --> Logger
-    Encoder --> OpenSSL
-    RecursiveProcessor --> QtCore
-    Encoder --> QtCore
-    Logger --> QtCore
+    RecursiveProcessor ..> Logger
+    Encoder ..> Logger
+    Encoder ..> OpenSSL
+    RecursiveProcessor ..> QtCore
+    Encoder ..> QtCore
+    Logger *-- QtCore
 ```
 
 ## Сборка
